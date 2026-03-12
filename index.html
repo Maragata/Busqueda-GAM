@@ -3,50 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="favicon.png">
-       <title>SAC</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Buscador GAM Oficial</title>
+    <style>
+        :root { --red: #B51F33; --bg: #f4f4f7; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 900px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); text-align: center; }
+        .logo { width: 50px; height: 50px; background: var(--red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: bold; }
+        #searchInput { width: 80%; padding: 15px 25px; font-size: 18px; border: 2px solid #ddd; border-radius: 50px; outline: none; }
+        #searchInput:focus { border-color: var(--red); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; text-align: left; }
+        .card { background: white; padding: 20px; border-radius: 12px; border-left: 5px solid var(--red); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .card h3 { margin: 0 0 10px 0; color: var(--red); font-size: 1rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .label { font-weight: bold; color: #888; font-size: 0.75rem; width: 75px; display: inline-block; }
+        .ce-box { background: #fff5f6; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; }
+        .btn-copy { font-size: 0.65rem; cursor: pointer; margin-left: 5px; padding: 2px 5px; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div id="start-screen" class="screen">
-            <h1>Preparación SAC</h1>
-            <p>Responde correctamente todas las preguntas. <br>Las preguntas incorrectas se repetirán al final de la ronda.</p>
-            <button id="start-btn" class="btn primary">Comenzar</button>
-        </div>
 
-        <div id="game-screen" class="screen hidden">
-            <div class="header-info">
-                <span id="round-indicator">Ronda 1</span>
-                <span id="progress-text">Pregunta 1 de X</span>
-            </div>
-            <div class="progress-bar">
-                <div id="progress-fill"></div>
-            </div>
+<div class="container">
+    <div class="logo">gam</div>
+    <h2>Buscador de Delegaciones</h2>
+    <input type="text" id="searchInput" placeholder="Escribe Delegación o CP...">
+    <div id="grid" class="grid"></div>
+</div>
 
-            <div class="question-container">
-                <h2 id="question-text">Pregunta...</h2>
-            </div>
+<script>
+    // LISTA DE DATOS LIMPIA
+    const personas = [
+        {"n": "Vizcaya", "cp": "48950", "p": "Erandio, Bilbao", "d": "Pol. Ind. Arriaga, Sakoni 6", "t": "944 994 300", "ce_c": "50354", "ce_u": "gam1", "ce_p": "50354"},
+        {"n": "Navia", "cp": "33795", "p": "Jarrio, Coaña. Navia", "d": "Ctra. N 634, Torce", "t": "985 631 796", "ce_c": "331030096", "ce_u": "gam96", "ce_p": "33103"},
+        {"n": "Santander", "cp": "39312", "p": "Polanco,", "d": "Bº de Requejada 23B y 24B", "t": "942 517 402", "ce_c": "331030097", "ce_u": "gam97", "ce_p": "33103"},
+        {"n": "Meres", "cp": "33199", "p": "Granda, Siero", "d": "Carretera Tiñana Km1", "t": "985 732 273", "ce_c": "331030012", "ce_u": "gam12", "ce_p": "33103"},
+        {"n": "Llanes", "cp": "33594", "p": "Posada de Llanes. Llanes", "d": "Polígono Industrial, Parcela 3B", "t": "985 408 098", "ce_c": "331030074", "ce_u": "gam74", "ce_p": "33103"},
+        {"n": "Menorca", "cp": "07710", "p": "Poisa, San Luis", "d": "Avda. Central 8", "t": "971 151 741", "ce_c": "331030072", "ce_u": "gam72", "ce_p": "33103"},
+        {"n": "Mallorca", "cp": "07350", "p": "Binissalem", "d": "Pol. Ind. Binissalem, C/ Pou Comú 19", "t": "971 886 722", "ce_c": "331030071", "ce_u": "gam71", "ce_p": "33103"},
+        {"n": "Ibiza", "cp": "07819", "p": "Jesús, Sta. Eulalia", "d": "Pol. Ind. Cana Palava naves 21-22", "t": "971 305 835", "ce_c": "331030040", "ce_u": "gam40", "ce_p": "33103"},
+        {"n": "Lanzarote", "cp": "35500", "p": "Arrecife. Lanzarote", "d": "C/ Bilbao s/n, Parcela 225", "t": "928 808 378", "ce_c": "331030082", "ce_u": "gam82", "ce_p": "33103"},
+        {"n": "Las Palmas", "cp": "35119", "p": "Agüimes. L.P.G.C.", "d": "Pol. Ind. Arinaga, C/ Las Adelfas", "t": "928 182 617", "ce_c": "331030081", "ce_u": "gam81", "ce_p": "33103"},
+        {"n": "Tenerife", "cp": "38592", "p": "Villa de Arico", "d": "Pol. Ind. Eras Altas, Parcela 13", "t": "922 160 966", "ce_c": "331030076", "ce_u": "gam76", "ce_p": "33103"},
+        {"n": "Fuerteventura", "cp": "35600", "p": "Puerto del Rosario", "d": "Pol. Ind. La Hondura. C/ El Veril", "t": "928 160 041", "ce_c": "331030083", "ce_u": "gam83", "ce_p": "33103"},
+        {"n": "Alcalá", "cp": "28800", "p": "Alcalá de Henares", "d": "Plg. Ind. Camarmilla", "t": "917 715 960", "ce_c": "331030089", "ce_u": "gam89", "ce_p": "33103"},
+        {"n": "Ciudad Real", "cp": "13170", "p": "Miguelturra", "d": "Ctra de Carrión N-430", "t": "926 647 230", "ce_c": "331030106", "ce_u": "gam-087", "ce_p": "1333103"},
+        {"n": "Madrid", "cp": "28830", "p": "San Fernando de Henares", "d": "Pol. Ind. Las Castellanas, P-35", "t": "916 715 960", "ce_c": "331030051", "ce_u": "gam51", "ce_p": "33103"},
+        {"n": "Manzanares", "cp": "13200", "p": "Manzanares", "d": "Pol. Ind. C/ Industrial XIV", "t": "926 647 230", "ce_c": "331030087", "ce_u": "gam87", "ce_p": "33103"},
+        {"n": "Toledo", "cp": "45007", "p": "Toledo", "d": "Pol. Ind. Alonso Quijano 1", "t": "925 240 118", "ce_c": "331030060", "ce_u": "gam60", "ce_p": "33103"},
+        {"n": "Ponferrada", "cp": "24400", "p": "Ponferrada", "d": "Ctra. Ponferrada - La Espina", "t": "987 458 011", "ce_c": "331030085", "ce_u": "gam113", "ce_p": "dNRUsnW"},
+        {"n": "Soria", "cp": "42005", "p": "Soria", "d": "Pol. Ind. Las Casas, C/ B", "t": "975 239 860", "ce_c": "331030086", "ce_u": "gam17", "ce_p": "33103"},
+        {"n": "Salamanca", "cp": "37184", "p": "Villares de la Reina", "d": "Pol. Ind. Guatemala 57", "t": "923 204 160", "ce_c": "331030088", "ce_u": "gam88", "ce_p": "33103"},
+        {"n": "Onzonilla", "cp": "24391", "p": "Ribaseca", "d": "Pol. Ind. Onzonilla Fase II", "t": "987 282 029", "ce_c": "331030084", "ce_u": "gam84", "ce_p": "33103"},
+        {"n": "Valladolid", "cp": "47193", "p": "La Cistérniga", "d": "Autovía del Duero, A-II", "t": "983 297 597", "ce_c": "331030063", "ce_u": "gam63", "ce_p": "33103"},
+        {"n": "Burgos", "cp": "09001", "p": "Burgos", "d": "C/ López Bravo 46", "t": "947 475 158", "ce_c": "331030064", "ce_u": "gam64", "ce_p": "33103"},
+        {"n": "Zaragoza", "cp": "50016", "p": "Zaragoza", "d": "Pol. Ind. Malpica, C/ E", "t": "976 455 024", "ce_c": "331030079", "ce_u": "gam79", "ce_p": "33103"},
+        {"n": "Gerona", "cp": "17460", "p": "Gerona", "d": "Pol. Ind. De Celrá", "t": "972 406 242", "ce_c": "331030068", "ce_u": "gam68", "ce_p": "33103"},
+        {"n": "Tarragona", "cp": "43480", "p": "Vilaseca", "d": "Ctra. A7 km 1.151", "t": "977 394 334", "ce_c": "331030090", "ce_u": "gam90", "ce_p": "33103"},
+        {"n": "Barcelona", "cp": "08750", "p": "Molins de Rei", "d": "Pol. Ind. Miquel Torelló 26", "t": "936 803 620", "ce_c": "331030067", "ce_u": "gam67", "ce_p": "33103"},
+        {"n": "Lleida", "cp": "25190", "p": "Lérida", "d": "Pol. Ind. Les Canals", "t": "973 216 378", "ce_c": "331030070", "ce_u": "gam70", "ce_p": "33103"},
+        {"n": "Vigo", "cp": "36214", "p": "Sárdoma, Vigo", "d": "Ctra de Moledo 5", "t": "986 348 087", "ce_c": "331030009", "ce_u": "gam0109", "ce_p": "rRNFLwc"},
+        {"n": "Lugo", "cp": "27150", "p": "Outerio de Rey", "d": "A6- Salida 507", "t": "982 207 432", "ce_c": "331030091", "ce_u": "gam91", "ce_p": "33103"},
+        {"n": "Santiago", "cp": "15708", "p": "Santiago", "d": "Pol. Ind. Costa Vella", "t": "981 897 529", "ce_c": "331030062", "ce_u": "gam62", "ce_p": "33103"},
+        {"n": "Orense", "cp": "32901", "p": "Orense", "d": "Pol. Ind. San Cibrao", "t": "988 383 844", "ce_c": "331030007", "ce_u": "gam07", "ce_p": "33103"},
+        {"n": "Ferrol", "cp": "15622", "p": "Cabanas, Ferrol", "d": "Pol. Ind. Vilar do Colo", "t": "981 349 003", "ce_c": "331030061", "ce_u": "gam61", "ce_p": "33103"},
+        {"n": "Murcia", "cp": "30835", "p": "Sagonera La Seca", "d": "Avda. Puntarrón 25", "t": "968 836 136", "ce_c": "331030066", "ce_u": "gam66", "ce_p": "33103"},
+        {"n": "Valencia", "cp": "46930", "p": "Quart de Poblet", "d": "Carrer Riu Vinalopó 2", "t": "961 417 790", "ce_c": "331030095", "ce_u": "gam0110", "ce_p": "LgSXQPB"},
+        {"n": "Alicante", "cp": "03114", "p": "Alicante", "d": "Pol. Ind. Las Atalayas", "t": "965 106 580", "ce_c": "331030093", "ce_u": "gam93", "ce_p": "33103"},
+        {"n": "Castellón", "cp": "12550", "p": "Almazora", "d": "Pol. Ind. Vía Europa", "t": "964 340 043", "ce_c": "331030094", "ce_u": "gam94", "ce_p": "WzfObxs"},
+        {"n": "Navarra", "cp": "31195", "p": "Pamplona", "d": "Pol. Ind. Agustinos", "t": "948 188 641", "ce_c": "331030080", "ce_u": "gam80", "ce_p": "33103"},
+        {"n": "La Rioja", "cp": "26370", "p": "Navarrete", "d": "Pol. Lentiscares", "t": "941 265 361", "ce_c": "331030078", "ce_u": "gam78", "ce_p": "33103"},
+        {"n": "Málaga", "cp": "29196", "p": "Málaga", "d": "Pol. Ind. Trévenez", "t": "952 231 498", "ce_c": "331030075", "ce_u": "gam75", "ce_p": "33103"},
+        {"n": "Huelva", "cp": "21001", "p": "Huelva", "d": "C/ Joaquín Turina 11", "t": "959 253 035", "ce_c": "331030073", "ce_u": "gam73", "ce_p": "33103"},
+        {"n": "Sevilla", "cp": "41011", "p": "Sevilla", "d": "Ctra. de la Esclusa s/n", "t": "954 278 502", "ce_c": "331030065", "ce_u": "gam112", "ce_p": "MWwCkXT"},
+        {"n": "Almería", "cp": "04120", "p": "Almería", "d": "Ctra. Viator-La Cañada", "t": "950 626 026", "ce_c": "331030098", "ce_u": "gam98", "ce_p": "33103"},
+        {"n": "Jaén", "cp": "23009", "p": "Jaén", "d": "Pol. Ind. Nuevo Jaén", "t": "953 284 258", "ce_c": "331030102", "ce_u": "gam102", "ce_p": "33103"},
+        {"n": "Granada", "cp": "18210", "p": "Peligros", "d": "Pol. Ind. Asegra", "t": "958 401 225", "ce_c": "331030069", "ce_u": "fcoca-gamrentals.com", "ce_p": "1333103"},
+        {"n": "Algeciras", "cp": "11203", "p": "Algeciras", "d": "Pol. Ind. Cortijo Real", "t": "956 573 256", "ce_c": "331030100", "ce_u": "gam100", "ce_p": "33103"},
+        {"n": "Merida", "cp": "06800", "p": "Mérida", "d": "Pol. Ind. El Prado", "t": "924 374 309", "ce_c": "331030099", "ce_u": "gam99", "ce_p": "33103"},
+        {"n": "Cadiz", "cp": "11500", "p": "El Puerto de Sta Mª", "d": "Pol. Ind. Salinas", "t": "956 832 212", "ce_c": "331030101", "ce_u": "gam101", 
+"ce_p": "33103"},
+{"n": "Genera", "cp": "-", "p": "-", "d": "-", "t": "-", "ce_c": "-", "ce_u": "gam0104", 
+"ce_p": "33103"},
+{"n": "Galman", "cp": "15614", "p": "Pontedeume, A Coruña", "d": "Polígono Industrial de Vidrieiro, parcela 16", "t": "981 795 544", "ce_c": "15614", "ce_u": "-", 
+"ce_p": "-"},{"n": "Villace", "cp": "24234", "p": "Villace", "d": "El Tejar S/N", "t": "-", "ce_c": "33103-0108", "ce_u": "gam0108", "ce_p": "133103"},
+{"n": "Carretillas Mayor", "cp": "-", "p": "-", "d": "-", "t": "-", "ce_c": "-", "ce_u": "recambiosmayor", "ce_p": "dYmCexi"},
 
-            <div id="options-container" class="options-grid">
-                </div>
+    ];
 
-            <div id="feedback-area" class="hidden">
-                <p id="feedback-msg"></p>
-                <button id="next-btn" class="btn">Siguiente</button>
-            </div>
-        </div>
+    const input = document.getElementById('searchInput');
+    const grid = document.getElementById('grid');
 
-        <div id="end-screen" class="screen hidden">
-            <h1>¡Excelente!</h1>
-            <p>Has completado todas las preguntas correctamente.Felicidades!!</p>
-            <div class="stats">
-                <p>Repasaste errores en <span id="total-rounds"></span> rondas.</p>
-            </div>
-            <button onclick="location.reload()" class="btn primary">Reiniciar</button>
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="./script.js"></script>
+    function copyText(txt) {
+        navigator.clipboard.writeText(txt);
+        alert("Copiado: " + txt);
+    }
+
+    input.addEventListener('input', () => {
+        const val = input.value.toLowerCase().trim();
+        grid.innerHTML = "";
+        if (!val) return;
+
+        const filtered = personas.filter(p => p.n.toLowerCase().includes(val) || p.cp.includes(val));
+
+        filtered.forEach(p => {
+            grid.innerHTML += `
+                <div class="card">
+                    <h3>${p.n}</h3>
+                    <p><span class="label">CP:</span> <b>${p.cp}</b></p>
+                    <p><span class="label">Población:</span> ${p.p}</p>
+                    <p><span class="label">Telf:</span> ${p.t}</p>
+                    <div class="ce-box">
+                        <b>CORREOS EXPRESS</b><br>
+                        Cod: ${p.ce_c} <span class="btn-copy" onclick="copyText('${p.ce_c}')">📋</span><br>
+                        Usu: ${p.ce_u} <span class="btn-copy" onclick="copyText('${p.ce_u}')">📋</span><br>
+                        Pass: ${p.ce_p} <span class="btn-copy" onclick="copyText('${p.ce_p}')">📋</span>
+                    </div>
+                </div>`;
+        });
+    });
+</script>
 </body>
 </html>
