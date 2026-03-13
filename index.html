@@ -26,6 +26,9 @@
         .label { font-weight: bold; color: #888; font-size: 0.75rem; width: 75px; display: inline-block; }
         .ce-box { background: #fff5f6; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.85rem; }
         .btn-copy { font-size: 0.65rem; cursor: pointer; margin-left: 5px; padding: 2px 5px; background: #eee; border-radius: 4px; }
+        
+        /* Estilo del Pie de Página */
+        footer { color: var(--gray-light); font-size: 0.8rem; margin-top: 10px; padding-bottom: 20px; text-align: center; width: 100%; }
     </style>
 </head>
 <body>
@@ -33,7 +36,6 @@
 <div id="login-screen">
     <div class="logo">gam</div>
     <h3>Acceso Privado</h3>
-     <h5>Gabriela Lacueva 2026 style="color: red;</h5>
     <input type="password" id="passInput" placeholder="Introduce la contraseña">
     <button onclick="checkPass()">Entrar</button>
     <p id="error-msg" style="color: red; font-size: 12px; display: none; margin-top: 10px;">Contraseña incorrecta</p>
@@ -47,6 +49,9 @@
     <input type="text" id="searchInput" placeholder="Escribe Delegación o CP...">
     <div id="grid" class="grid"></div>
 </div>
+    <footer id="footer-text">
+    Gabriela Lacueva 2026
+</footer>
 
 <script>
     // CONFIGURACIÓN DE SEGURIDAD
